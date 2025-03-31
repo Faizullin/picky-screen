@@ -1,0 +1,21 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Output directories
+dist/
+build/
+
+# Electron specific
+/.vscode/
+*.asar
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env

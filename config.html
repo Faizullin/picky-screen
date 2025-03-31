@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Settings</title>
+  <script defer src="libs/frontend-scripts/config.js"></script>
+</head>
+<body>
+  <h3>Settings</h3>
+  <label><input type="checkbox" id="use-telegram" /> Use Telegram Bot</label><br/>
+  <label><input type="checkbox" id="use-gpt" /> Use ChatGPT API</label><br/>
+  <div id="prompt-field" style="display:none;">
+    <label>Prompt:</label>
+    <input type="text" id="gpt-prompt" />
+  </div>
+  <button id="save-settings">Save</button>
+</body>
+</html>
