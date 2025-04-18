@@ -14,49 +14,23 @@ const fs = require("fs");
 let currentPage = 1;
 
 
+let currentAiModel = "gpt-4o"; // or "o1"
+
 function setupShortcuts(mainWindow) {
   globalShortcut.register("Ctrl+Alt+H", () => {
     toggleWindow("main");
   });
 
-  const processAiResponse = (response) => {
+  const processAiResponse = (response, aiModel) => {
     let tmp_response = response.trim();
-    console.log("value:", tmp_response);
-
-    let response_json = null;
-    if (tmp_response.startsWith("```json") && tmp_response.endsWith("```")) {
-      const sliced_response = tmp_response.slice(7, tmp_response.length - 3);
-      response_json = JSON.parse(sliced_response);
-    } else {
-      throw new Error("Invalid response format");
-    }
-
-    const user = "ai";
-    // console.log("Processed response: ", processed_response, typeof processed_response);
-    if (response_json.status === "success") {
-      const arr = response_json.results.map((result) => {
-        return {
-          task_number: result.task_number,
-          short_answer: result.short_answer,
-          explanation: result.explanation
-        }
-      });
-      const new_messages = arr.map((result) => {
-        return new Message(
-          `${user}`,
-          `(${user}): ${result.task_number}) ${result.short_answer}\nExplaination: ${result.explanation}`
-        )
-      });
-      const answer_text = new_messages.map((message) => message.content).join("\n");
-      addToClipboard(answer_text);
-      new_messages.forEach(element => {
-        saveMessage(element);
-      });
-    } else {
-      console.log("Error: ", response_json.error);
-      const error_msg = new Message(`${user}`, `(${user}): [Error] ${response_json.error}`);
-      saveMessage(error_msg);
-    }
+    console.log(`[${aiModel}]value:`, tmp_response);
+    const user = aiModel;
+    const new_message = new Message(
+      `${user}`,
+      `(${user}): ${tmp_response}`
+    );
+    addToClipboard(new_message.content);
+    saveMessage(new_message);
   }
 
 
@@ -81,9 +55,9 @@ function setupShortcuts(mainWindow) {
 
       try {
         if (config.aiApiEnabled) {
-          const response = await sendScreenshotToAI(imgPath);
-          console.log("AI Response for Image:", response);
-          processAiResponse(response);
+          const aiModelStr = (' ' + currentAiModel).slice(1);
+          const response = await sendScreenshotToAI(imgPath, aiModelStr);
+          processAiResponse(response, aiModelStr);
         }
       } catch (error) {
         console.error("Error sending clipboard image to AI:", error.message);
@@ -97,8 +71,9 @@ function setupShortcuts(mainWindow) {
       }
       try {
         if (use_ai_api) {
-          const response = await sendTextToAI(content.data); // Assuming sendTextToAI function exists
-          processAiResponse(response);
+          const aiModelStr = (' ' + currentAiModel).slice(1);
+          const response = await sendTextToAI(content.data, aiModelStr);
+          processAiResponse(response, aiModelStr);
         }
       } catch (error) {
         console.error("Error sending clipboard text to AI:", error.message);
@@ -116,8 +91,9 @@ function setupShortcuts(mainWindow) {
     }
     if (config.aiApiEnabled) {
       try {
-        const response = await sendScreenshotToAI(imgPath);
-        processAiResponse(response);
+        const aiModelStr = (' ' + currentAiModel).slice(1);
+        const response = await sendScreenshotToAI(imgPath, aiModelStr);
+        processAiResponse(response, aiModelStr);
       } catch (e) {
         console.error("Error sending screenshot to AI:", e.message);
       }
@@ -144,7 +120,6 @@ function setupShortcuts(mainWindow) {
       currentPage--;
     }
     const prevMessage = messages[currentPage - 1];
-    console.log("Previous message: ", prevMessage);
     mainWindow.webContents.send("update-content", {
       type: "single-message",
       data: prevMessage,
@@ -157,7 +132,6 @@ function setupShortcuts(mainWindow) {
     const messages = getMessages(1, null);
     currentPage = messages.length;
     const lastMessage = messages[currentPage - 1];
-    console.log("Last message: ", lastMessage);
     mainWindow.webContents.send("update-content", {
       type: "single-message",
       data: lastMessage,
@@ -172,6 +146,23 @@ function setupShortcuts(mainWindow) {
 
   globalShortcut.register("Ctrl+Alt+M", () => {
     toggleWindow("config");
+  });
+
+  const setCurrentAiModel = (model) => {
+    currentAiModel = model;
+    console.log("AI model set to:", model);
+  };
+
+  globalShortcut.register("Ctrl+Alt+1", () => {
+    setCurrentAiModel("gpt-4o");
+  });
+
+  globalShortcut.register("Ctrl+Alt+2", () => {
+    setCurrentAiModel("o1");
+  });
+
+  globalShortcut.register("Ctrl+Alt+3", () => {
+    setCurrentAiModel("claude-3-7-sonnet-20250219");
   });
 
   console.log("Shortcuts registered.");

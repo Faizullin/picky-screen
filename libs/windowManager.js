@@ -45,7 +45,7 @@ function createWindow() {
 }
 
 
-const window_sizes = { width: 80, height: 50 }
+const window_sizes = { width: 100, height: 50 }
 
 function toggleWindow(name = "main") {
   const win = mainWindow;
@@ -60,7 +60,6 @@ function toggleWindow(name = "main") {
   }
 }
 function updateOverlayText(message_obj) {
-  console.log("🔹 updateOverlayText:", message_obj.content);
   mainWindow.webContents.send('update-content', {
     "type": "single-message",
     "data": message_obj,

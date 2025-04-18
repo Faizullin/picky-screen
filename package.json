@@ -11,9 +11,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@google/generative-ai": "^0.22.0",
     "axios": "^1.7.9",
     "child_process": "^1.0.2",
+    "claude-ai": "^1.2.2",
     "dotenv": "^16.4.7",
     "electron": "^34.2.0",
     "fs": "^0.0.1-security",

@@ -22,6 +22,47 @@ if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
 
+const { sendScreenshotToAI, sendTextToAI } = require('./aiApi');
+const path = require('path');
+const fetch = require('node-fetch'); // Ensure this is installed: npm install node-fetch
+
+bot.command("ai", async (ctx) => {
+    try {
+        const userInput = ctx.message.text.split(" ").slice(1).join(" "); // Extract text after /bot
+        const chatId = ctx.message.chat.id;
+
+        console.log("Received message:", ctx.message.text, ctx.message.photo, userInput);
+
+        if (ctx.message.photo) {
+            // Handle image attachments
+            const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id; // Get highest resolution image
+            const fileLink = await bot.telegram.getFileLink(fileId);
+
+            // Download the image locally
+            const localImagePath = path.join(__dirname, 'temp', `${fileId}.jpg`);
+            const response = await fetch(fileLink.href);
+            const buffer = await response.buffer();
+            fs.writeFileSync(localImagePath, buffer);
+
+            // Send the image to AI for processing
+            const aiResponse = await sendScreenshotToAI(localImagePath, "gpt-4o");
+            await ctx.reply(`🤖 AI Response:\n${aiResponse}`);
+
+            // Clean up the temporary file
+            fs.unlinkSync(localImagePath);
+        } else if (userInput) {
+            // Handle text input
+            const aiResponse = await sendTextToAI(userInput, "gpt-4o");
+            await ctx.reply(`🤖 AI Response:\n${aiResponse}`);
+        } else {
+            await ctx.reply("⚠️ Please provide text or attach an image with the /bot command.");
+        }
+    } catch (error) {
+        console.error("Error in /bot command:", error);
+        await ctx.reply("❌ An error occurred while processing your request.");
+    }
+});
+
 bot.command("chatid", async (ctx) => {
     const chatId = ctx.message.chat.id;
     await ctx.reply(`📡 Your Chat ID: ${chatId}`);
@@ -36,7 +77,6 @@ bot.command("quit", async (ctx) => {
 let screenshotMessages = new Map();
 
 bot.command("show", async (ctx) => {
-    console.log("/show ocmmmand trigger")
     if (ctx.message.reply_to_message) {
         const referencedMessage = ctx.message.reply_to_message;
         const canReplyToScreenshot = true // screenshotMessages.has(referencedMessage.message_id);
